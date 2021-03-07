@@ -7,11 +7,12 @@
         mc:Ignorable="d"
         Title="AddPhraseWindow" Height="450" Width="800">
     <Grid>
-        <TextBox x:Name="AddPhraseBox" HorizontalAlignment="Left" Height="50" Margin="317,158,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="371" FontFamily="OCR A Extended" FontSize="16" TextChanged="addPhraseBox_TextChanged"/>
-        <Button x:Name="recBtn" Content="Record" HorizontalAlignment="Left" Margin="404,93,0,0" VerticalAlignment="Top" Width="180" Height="45" FontFamily="OCR A Extended" FontSize="22"/>
+        <TextBox x:Name="AddPhraseBox" HorizontalAlignment="Left" Height="50" Margin="328,158,0,0" TextWrapping="Wrap" Text="Enter keyphrase/ phrases" VerticalAlignment="Top" Width="360" FontFamily="OCR A Extended" FontSize="16" TextChanged="AddPhraseBox_TextChanged"/>
+        <Button x:Name="RecBtn" Content="Record" HorizontalAlignment="Left" Margin="420,90,0,0" VerticalAlignment="Top" Width="180" Height="45" FontFamily="OCR A Extended" FontSize="22" Click="RecBtn_Click"/>
         <Button x:Name="returnBtn" Content="Return" HorizontalAlignment="Left" Margin="668,355,0,0" VerticalAlignment="Top" Width="100" Height="40" FontFamily="OCR A Extended" FontSize="16"/>
         <Image x:Name="indicatorImg" HorizontalAlignment="Left" Height="40" Margin="638,93,0,0" VerticalAlignment="Top" Width="50" OverridesDefaultStyle="True" Source="indicatorBtnPic2.png"/>
         <Image HorizontalAlignment="Left" Height="375" Margin="20,20,0,0" VerticalAlignment="Top" Width="279" Source="indicatorInfoPic.png"/>
+        <Label x:Name="ErrorLbl" Content="Error here" HorizontalAlignment="Left" Margin="380,213,0,0" VerticalAlignment="Top" Height="51" Width="266" FontFamily="OCR A Extended" VerticalContentAlignment="Center" Background="{x:Null}" Foreground="Red" HorizontalContentAlignment="Center" Visibility="Hidden"/>
 
     </Grid>
 </Window>
