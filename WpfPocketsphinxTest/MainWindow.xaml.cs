@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace WpfPocketsphinxTest
+namespace VoiceControllerTool
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -32,7 +32,7 @@ namespace WpfPocketsphinxTest
 
         private void PhraseListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            
         }
 
         private void AddBtn_Click(object sender, RoutedEventArgs e)
