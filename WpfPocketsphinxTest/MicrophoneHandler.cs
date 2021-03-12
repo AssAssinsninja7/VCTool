@@ -33,6 +33,9 @@ namespace VoiceControllerTool
         }
 
         public string Name { get; } //Microphone name
+
+        public int SelectedDeviceIndex { get; set; }
+
         public SampelingRateEnum SampelingRate { get; }
         public int ClipTime { get; }
 
@@ -91,7 +94,7 @@ namespace VoiceControllerTool
             if (deviceSources.Count == 0) return;
 
             SaveFileDialog save = new SaveFileDialog();
-            save.Filter = "Wave File (*.wav)|*.wav";
+            save.Filter = "Wave File (*.wav)|*.wav"; //switch this out to the dll save
 
 
             save.ShowDialog();  //Switch this out with a list of all the objects
@@ -104,7 +107,7 @@ namespace VoiceControllerTool
             sourceStream.WaveFormat = new WaveFormat(44100, WaveIn.GetCapabilities(selectedDevice).Channels);
 
             sourceStream.DataAvailable += new EventHandler<WaveInEventArgs>(SourceStream_DataAvailable);
-            waveFileWriter = new WaveFileWriter(save.FileName, sourceStream.WaveFormat);
+            waveFileWriter = new WaveFileWriter(save.FileName, sourceStream.WaveFormat); //same hare dll save instead of wav save
 
             sourceStream.StartRecording();
         }
@@ -114,7 +117,6 @@ namespace VoiceControllerTool
         {
             waveFileWriter.WriteData(e.Buffer, 0, e.BytesRecorded);
 
-            waveFileWriter.CreateObjRef();
             waveFileWriter.Flush(); //clear the ram so that it doesn't hold the old recording
         }
 
@@ -135,6 +137,19 @@ namespace VoiceControllerTool
             }
         }
 
+        private void ProcessAudio()
+        {
+            // Create a new array for our audio data. 1
+            //var newData = new float[sourceStream.DataAvailable * deviceSources[SelectedDeviceIndex].Channels];
+            // Get our data from our AudioClip. 2
+            // Convert audio data into byte data. 3
+            // Process the raw byte data with our decoder. 4
+            // Checks if we recognize a keyphrase. 5
+                // Fire our event. 5.1
+                // Stop the decoder. 5.2
+                // Start the decoder again. 5.3
+        }
 
+        
     }
 }

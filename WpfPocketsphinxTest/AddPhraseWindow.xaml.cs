@@ -170,6 +170,7 @@ namespace VoiceControllerTool
                 DevicesComboBox.Items.Add(d.ProductName);
             }
             DevicesComboBox.SelectedIndex = 0;
+            micHandler.SelectedDeviceIndex = DevicesComboBox.SelectedIndex;
         }
 
         
