@@ -6,7 +6,6 @@ C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\Wp
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\WpfPocketsphinxTest_MarkupCompile.lref
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\WpfPocketsphinxTest.exe
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\WpfPocketsphinxTest.pdb
-C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\VCTool.csprojAssemblyReference.cache
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\bin\Debug\WpfPocketsphinxTest.exe.config
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\bin\Debug\WpfPocketsphinxTest.exe
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\bin\Debug\WpfPocketsphinxTest.pdb
@@ -31,3 +30,4 @@ C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\bin\Debug\NA
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\bin\Debug\System.Security.AccessControl.xml
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\bin\Debug\System.Security.Principal.Windows.xml
 C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\VCTool.csproj.CopyComplete
+C:\Users\jasmi\source\repos\WpfPocketsphinxTest\WpfPocketsphinxTest\obj\Debug\VCTool.csprojAssemblyReference.cache

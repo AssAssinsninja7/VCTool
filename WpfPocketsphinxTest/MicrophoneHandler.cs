@@ -1,13 +1,8 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using NAudio.Wave;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using Microsoft.Win32;
-using NAudio.Wave;
-using Pocketsphinx;
 
 
 namespace VoiceControllerTool
@@ -31,6 +26,10 @@ namespace VoiceControllerTool
             [Description("48K")]
             FortyEightK = 48000,
         }
+
+        public delegate void RecordingFinishedHandler(WaveIn sourceAud);
+        public event RecordingFinishedHandler RecordingFinished;
+
 
         public string Name { get; } //Microphone name
 
@@ -57,8 +56,7 @@ namespace VoiceControllerTool
             SampelingRate = _sampelingRate;
             ClipTime = _clipTime;
 
-
-          
+            DetectAudioSources();
         }
 
         public MicrophoneHandler()
@@ -67,7 +65,7 @@ namespace VoiceControllerTool
         }
 
 
-        //Find audiosources conncected to the current device
+        //Find audio sources conncected to the current device
         private void DetectAudioSources()
         {
             deviceSources = new List<WaveInCapabilities>();
@@ -76,24 +74,14 @@ namespace VoiceControllerTool
             {
                 deviceSources.Add(WaveIn.GetCapabilities(i));
             }
-           
         }
 
-        private void SetupKeywordDecoder()
-        {
-            Config config = Pocketsphinx.Decoder.DefaultConfig();
-
-            string speachData;
-
-
-
-        }
 
         public void StartRecording(int index, string deviceName)
-        {      
+        {
             if (deviceSources.Count == 0) return;
 
-            SaveFileDialog save = new SaveFileDialog();
+            SaveFileDialog save = new SaveFileDialog();  //Check if there's a setpath to a savefile, if nah, let the user navigate to it
             save.Filter = "Wave File (*.wav)|*.wav"; //switch this out to the dll save
 
 
@@ -104,10 +92,10 @@ namespace VoiceControllerTool
             sourceStream = new WaveIn();
             sourceStream.DeviceNumber = selectedDevice;
 
-            sourceStream.WaveFormat = new WaveFormat(44100, WaveIn.GetCapabilities(selectedDevice).Channels);
+            sourceStream.WaveFormat = new WaveFormat((int)SampelingRate, WaveIn.GetCapabilities(selectedDevice).Channels);
 
             sourceStream.DataAvailable += new EventHandler<WaveInEventArgs>(SourceStream_DataAvailable);
-            waveFileWriter = new WaveFileWriter(save.FileName, sourceStream.WaveFormat); //same hare dll save instead of wav save
+            waveFileWriter = new WaveFileWriter(save.FileName, sourceStream.WaveFormat); //same here dll save instead of wav save
 
             sourceStream.StartRecording();
         }
@@ -115,7 +103,7 @@ namespace VoiceControllerTool
 
         private void SourceStream_DataAvailable(object sender, WaveInEventArgs e)
         {
-            waveFileWriter.WriteData(e.Buffer, 0, e.BytesRecorded);
+            waveFileWriter.Write(e.Buffer, 0, e.BytesRecorded);
 
             waveFileWriter.Flush(); //clear the ram so that it doesn't hold the old recording
         }
@@ -123,9 +111,26 @@ namespace VoiceControllerTool
 
         public void StopRecording()
         {
+            int position = sourceStream.DeviceNumber;
+            float[] soundData = new float[sourceStream.WaveFormat.SampleRate * sourceStream.WaveFormat.Channels];
+
+            float[] newData = new float[position * sourceStream.WaveFormat.Channels];
+
+            for (int i = 0; i < newData.Length; i++)
+            {
+                newData[i] = soundData[i];
+            }
+
+            byte[] byteData = ConvertToBytes(newData, sourceStream.WaveFormat.Channels);
+            waveFileWriter.Write(byteData, 0, 0);
+
+            if (RecordingFinished != null)
+                RecordingFinished.Invoke(sourceStream);
+
             if (sourceStream != null)
             {
                 sourceStream.StopRecording();
+
                 sourceStream.Dispose();
                 sourceStream = null;
             }
@@ -135,21 +140,31 @@ namespace VoiceControllerTool
                 waveFileWriter.Dispose();
                 waveFileWriter = null;
             }
+
         }
 
-        private void ProcessAudio()
+        private void SourceStream_DataAvailable1(object sender, WaveInEventArgs e)
         {
-            // Create a new array for our audio data. 1
-            //var newData = new float[sourceStream.DataAvailable * deviceSources[SelectedDeviceIndex].Channels];
-            // Get our data from our AudioClip. 2
-            // Convert audio data into byte data. 3
-            // Process the raw byte data with our decoder. 4
-            // Checks if we recognize a keyphrase. 5
-                // Fire our event. 5.1
-                // Stop the decoder. 5.2
-                // Start the decoder again. 5.3
+            throw new NotImplementedException();
         }
 
-        
+        private static byte[] ConvertToBytes(float[] data, int channels)
+        {
+            float tot = 0;
+            byte[] byteData = new byte[data.Length / channels * 2];
+            for (int i = 0; i < data.Length / channels; i++)
+            {
+                float sum = 0;
+                for (int j = 0; j < channels; j++)
+                {
+                    sum += data[i * channels + j];
+                }
+                tot += sum * sum;
+                short val = (short)(sum / channels * 20000); // volume
+                byteData[2 * i] = (byte)(val & 0xff);
+                byteData[2 * i + 1] = (byte)(val >> 8);
+            }
+            return byteData;
+        }
     }
 }

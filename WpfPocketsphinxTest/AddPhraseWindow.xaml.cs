@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NAudio.Wave;
+using Pocketsphinx;
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace VoiceControllerTool
@@ -20,28 +13,35 @@ namespace VoiceControllerTool
     /// </summary>
     public partial class AddPhraseWindow : Window
     {
+
         MainWindow main;
         MicrophoneHandler micHandler;
+        Pocketsphinx.Decoder decoder;
 
-
+        int maxRecTime = 20; 
         bool recording;
 
         DispatcherTimer timer;
         TimeSpan time;
 
+
+
+        public delegate void SpeechRecognizedHandler(string phrase);
+        public event SpeechRecognizedHandler OnSpeechRecognized;
+
+
         public AddPhraseWindow(MainWindow _main)
         {
             InitializeComponent();
 
-            micHandler = new MicrophoneHandler();
-
+            SetupMicrophone();
             LoadDevices();
+            SetupKPDecoder(); //doesn't work yet it complains about not finding the dll for config
 
             main = _main;
             recording = false;
 
             time = TimeSpan.FromSeconds(10);
-
             timer = new DispatcherTimer(new TimeSpan(0, 0, 1), DispatcherPriority.Normal, delegate
             {
                 if (time == TimeSpan.Zero) timer.Stop();
@@ -49,6 +49,13 @@ namespace VoiceControllerTool
 
             }, Application.Current.Dispatcher);
         }
+
+        private void SetupMicrophone()
+        {
+            micHandler = new MicrophoneHandler(WaveIn.GetCapabilities(0).ProductName, MicrophoneHandler.SampelingRateEnum.SixteenK, maxRecTime);
+            micHandler.RecordingFinished += ProcessAudio;
+        }
+
 
         private void AddPhraseBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -74,13 +81,13 @@ namespace VoiceControllerTool
         /// <param name="e"></param>
         private void RecBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (!recording) 
+            if (!recording)
             {
                 recording = true;
                 ErrorLbl.Visibility = Visibility.Hidden;
                 RecBtn.Background = new SolidColorBrush(Color.FromArgb(133, 30, 30, 0));
-                RecBtn.Content = "Recording";     
-              
+                RecBtn.Content = "Recording";
+
 
                 SetRecBtn();
 
@@ -88,11 +95,9 @@ namespace VoiceControllerTool
                 MessageBoxResult result = MessageBox.Show("Is the keyphrase correct?\n " + AddPhraseBox.Text, "Confirm Keyphrase", MessageBoxButton.OKCancel, MessageBoxImage.Question);
 
                 if (result != MessageBoxResult.OK) return;
-                
+
 
                 micHandler.StartRecording(DevicesComboBox.SelectedIndex, DevicesComboBox.Text);
-                
-            
 
             }
             else if (AddPhraseBox.Text == "Enter keyphrase/ phrases" || AddPhraseBox.Text == string.Empty)
@@ -106,13 +111,13 @@ namespace VoiceControllerTool
                 recording = false;
 
                 SetRecBtn();
-                //Stop recording
+                //Stop recording get the channels and sample rate from waveform
 
                 micHandler.StopRecording();
             }
-            else if(recording && AddPhraseBox.Text != "Enter keyphrase/ phrases" && AddPhraseBox.Text != string.Empty)
+            else if (recording && AddPhraseBox.Text != "Enter keyphrase/ phrases" && AddPhraseBox.Text != string.Empty)
             {
-               
+
                 main.AddNewKeyphrase(AddPhraseBox.Text);
 
 
@@ -154,9 +159,9 @@ namespace VoiceControllerTool
              */
         }
 
-        private void UpdateButtons() 
+        private void UpdateButtons()
         {
-        
+
         }
 
 
@@ -173,6 +178,84 @@ namespace VoiceControllerTool
             micHandler.SelectedDeviceIndex = DevicesComboBox.SelectedIndex;
         }
 
-        
+        private void SetupKPDecoder()
+        {
+            Config c = Pocketsphinx.Decoder.DefaultConfig();
+
+            string speechDataPath = "C:/Users/jasmi/source/repos/WpfPocketsphinxTest/WpfPocketsphinxTest/StreamingAssets/en-us";
+
+            string dictPath = "C:/Users/jasmi/source/repos/WpfPocketsphinxTest/WpfPocketsphinxTest/StreamingAssets/en-us/dictionary";
+
+            string logPath = "C:/Users/jasmi/source/repos/WpfPocketsphinxTest/WpfPocketsphinxTest/StreamingAssets/en-us/en-us.lm.bin";
+
+            string keywordsPath = "C:/Users/jasmi/source/repos/WpfPocketsphinxTest/WpfPocketsphinxTest/StreamingAssets/keywords.txt";
+
+            c.SetString("-hmm", speechDataPath);
+
+            c.SetString("-dict", dictPath);
+
+            c.SetString("-kws", keywordsPath);
+
+            /* How accurate our decoder will be. For shorter keyphrases you can use smaller thresholds like 1e-1, 
+             * for longer keyphrases the threshold must be bigger, up to 1e-50. 
+             * If your keyphrase is very long – larger than 10 syllables – it is recommended to split it 
+             * and spot for parts separately. 
+             */
+            c.SetFloat("-kws_threshold", 1e-15);
+
+            //// These two lines enable and save raw data to a log for debugging. 
+            //c.SetString("-logfn", logPath);
+            //c.SetString("-rawlogdir", "adress here"); //output the debug to where we want the data. 
+
+            //Create a decoder with out configuration setup
+            decoder = new Pocketsphinx.Decoder(c);
+            //Start the decoder
+            decoder.StartUtt();
+        }
+
+        private void ProcessAudio(WaveIn sourceStream)
+        {
+            // Create a new array for our audio data. 1
+            var newData = new float[sourceStream.WaveFormat.SampleRate * sourceStream.WaveFormat.Channels];
+            // Get our data from our sourceStream. 2
+
+            // Convert audio data into byte data. 3
+            byte[] byteData = ConvertToBytes(newData, sourceStream.WaveFormat.Channels);
+            // Process the raw byte data with our decoder. 4
+            decoder.ProcessRaw(byteData, byteData.Length, false, false);
+            // Checks if we recognize a keyphrase. 5
+            if (decoder.Hyp() != null)
+            {
+                // Fire our event. 5.1
+                if (OnSpeechRecognized != null)
+                    OnSpeechRecognized.Invoke(decoder.Hyp().Hypstr);
+                // Stop the decoder. 5.2
+                decoder.EndUtt();
+                // Start the decoder again. 5.3
+                decoder.StartUtt();
+            }
+        }
+
+
+        //Converts audio input from float to byte based on the used microphone
+        private static byte[] ConvertToBytes(float[] data, int channels)
+        {
+            float tot = 0;
+            byte[] byteData = new byte[data.Length / channels * 2];
+            for (int i = 0; i < data.Length / channels; i++)
+            {
+                float sum = 0;
+                for (int j = 0; j < channels; j++)
+                {
+                    sum += data[i * channels + j];
+                }
+                tot += sum * sum;
+                short val = (short)(sum / channels * 20000); // volume
+                byteData[2 * i] = (byte)(val & 0xff);
+                byteData[2 * i + 1] = (byte)(val >> 8);
+            }
+            return byteData;
+        }
+
     }
 }
